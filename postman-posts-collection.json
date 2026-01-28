@@ -1,0 +1,68 @@
+{
+  "info": {
+    "name": "Laravel Posts API",
+    "_postman_id": "posts-api-collection",
+    "description": "Collection to test the Posts API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List posts",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/api/posts", "host": ["{{baseUrl}}"], "path": ["api","posts"] }
+      }
+    },
+    {
+      "name": "Create post",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Hello from Postman\",\n  \"content\": \"This is a sample post created from Postman.\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/posts", "host": ["{{baseUrl}}"], "path": ["api","posts"] }
+      }
+    },
+    {
+      "name": "Get post",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/api/posts/:id", "host": ["{{baseUrl}}"], "path": ["api","posts",":id"] }
+      }
+    },
+    {
+      "name": "Update post",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Updated title\",\n  \"content\": \"Updated content.\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/posts/:id", "host": ["{{baseUrl}}"], "path": ["api","posts",":id"] }
+      }
+    },
+    {
+      "name": "Delete post",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/api/posts/:id", "host": ["{{baseUrl}}"], "path": ["api","posts",":id"] }
+      }
+    }
+  ],
+  "event": [],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000", "type": "string" }
+  ]
+}
