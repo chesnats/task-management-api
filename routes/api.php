@@ -1,10 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\TaskController;
 
 // User registration
-Route::apiResource('users', UserController::class)->except(['store']);
-Route::post('register', [AuthController::class, 'register']);
+Route::apiResource('users', UserController::class);
 
+// Task routes
+Route::apiResource('tasks', TaskController::class);
