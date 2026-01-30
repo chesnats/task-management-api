@@ -24,10 +24,18 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255|unique:users,name',
-            'email' => 'required|email|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
             'password' => 'required|min:6|confirmed',
         ]);
+        
+        if (User::where('name', $data['name'])->exists()) {
+            return response()->json(['message' => 'Name already exists'], 400);
+        }
+
+        if (User::where('email', $data['email'])->exists()) {
+            return response()->json(['message' => 'Email already exists'], 400);
+        }
 
         $data['password'] = Hash::make($data['password']);
 
@@ -40,10 +48,20 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
-            'name' => 'sometimes|string|max:255|unique:users,name,' . $user->id,
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email',
             'password' => 'sometimes|min:6|confirmed',
         ]);
+
+        if (isset($data['name']) &&
+            User::where('name', $data['name'])->where('id', '!=', $user->id)->exists()) {
+            return response()->json(['message' => 'Name already exists'], 400);
+        }
+
+        if (isset($data['email']) &&
+            User::where('email', $data['email'])->where('id', '!=', $user->id)->exists()) {
+            return response()->json(['message' => 'Email already exists'], 400);
+        }
 
         if (isset($data['password'])) {
             $data['password'] = Hash::make($data['password']);
@@ -59,8 +77,6 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return response()->json([
-            'message' => 'User deleted successfully'
-        ], 200);
+        return response()->json(['message' => 'User deleted successfully'], 204);
     }
 }
