@@ -7,31 +7,40 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    // GET /tasks
-    public function index()
+    // GET /api/tasks?include=user
+    public function index(Request $request)
     {
-        return response()->json(Task::all());
-    }
+        $query = Task::query();
 
-    // GET /tasks/{id}
-    public function show($id)
-    {
-        $task = Task::find($id);
-        if (! $task) {
-            return response()->json(['message' => 'Tasks not found. '], 404);
+        if ($request->query('include') === 'user') {
+            $query->with('user');
         }
 
-        return response()->json($task);
+        return response()->json($query->get(), 200);
     }
 
-    // POST /tasks
+    // GET /api/tasks/{task}?include=user
+    public function show(Request $request, Task $task)
+    {
+        if (! $task) {
+            return response()->json(['message' => 'Task not found.'], 404);
+        }
+
+        if ($request->query('include') === 'user') {
+            $task->load('user');
+        }
+
+        return response()->json($task, 200);
+    }
+
+    // POST /api/tasks
     public function store(Request $request)
     {
         $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'completed' => 'nullable|boolean',
-            'user_id' => 'nullable|integer|exists:users,id',
+            'title'       => 'required|string|max:255',
+            'description' => 'sometimes|nullable|string',
+            'completed'   => 'sometimes|boolean',
+            'user_id'     => 'required|exists:users,id',
         ]);
 
         if (isset($data['title']) && Task::where('title', $data['title'])->exists()) {
@@ -43,19 +52,18 @@ class TaskController extends Controller
         return response()->json($task, 201);
     }
 
-    // PATCH /tasks/{id}
-    public function update(Request $request, $id)
+    // PUT/PATCH /api/tasks/{task}
+    public function update(Request $request, Task $task)
     {
-        $task = Task::find($id);
         if (! $task) {
-            return response()->json(['message' => 'Tasks not found. '], 404);
+            return response()->json(['message' => 'Task not found.'], 404);
         }
 
         $data = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
+            'title'       => 'sometimes|required|string|max:255',
             'description' => 'sometimes|nullable|string',
-            'completed' => 'sometimes|boolean',
-            'user_id' => 'sometimes|nullable|integer|exists:users,id',
+            'completed'   => 'sometimes|boolean',
+            'user_id'     => 'sometimes|exists:users,id',
         ]);
 
         if (isset($data['title']) && Task::where('title', $data['title'])->where('id', '!=', $task->id)->exists()) {
@@ -64,19 +72,30 @@ class TaskController extends Controller
 
         $task->update($data);
 
-        return response()->json($task);
+        return response()->json($task, 200);
     }
 
-    // DELETE /tasks/{id}
-    public function destroy($id)
+    // DELETE /api/tasks/{task}
+    public function destroy(Task $task)
     {
-        $task = Task::find($id);
         if (! $task) {
-            return response()->json(['message' => 'Tasks not found. '], 404);
+            return response()->json(['message' => 'Task not found.'], 404);
         }
 
         $task->delete();
 
-        return response()->json(['message' => 'Task deleted successfully'], 204);
+        return response()->json(['message' => 'Task deleted successfully.'], 204);
+    }
+
+    // GET /api/tasks/{task}/user
+    public function user(Task $task)
+    {
+        $user = $task->user;
+
+        if (! $user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        return response()->json($user, 200);
     }
 }

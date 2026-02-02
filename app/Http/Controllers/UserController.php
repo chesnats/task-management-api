@@ -4,28 +4,37 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    // GET /api/users
-    public function index()
+    // GET /api/users?include=tasks
+    public function index(Request $request)
     {
-        return User::all();
+        $query = User::query();
+
+        if ($request->query('include') === 'tasks') {
+            $query->with('tasks');
+        }
+
+        return response()->json($query->get(), 200);
     }
 
-    // GET /api/users/{user}
-    public function show(User $user)
+    // GET /api/users/{user}?include=tasks
+    public function show(Request $request, User $user)
     {
-        return $user;
+        if ($request->query('include') === 'tasks') {
+            $user->load('tasks');
+        }
+
+        return response()->json($user, 200);
     }
 
     // POST /api/users
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email',
             'password' => 'required|min:6|confirmed',
         ]);
         
@@ -37,8 +46,6 @@ class UserController extends Controller
             return response()->json(['message' => 'Email already exists'], 400);
         }
 
-        $data['password'] = Hash::make($data['password']);
-
         $user = User::create($data);
 
         return response()->json($user, 201);
@@ -48,8 +55,8 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email',
+            'name'     => 'sometimes|string|max:255',
+            'email'    => 'sometimes|email',
             'password' => 'sometimes|min:6|confirmed',
         ]);
 
@@ -63,13 +70,15 @@ class UserController extends Controller
             return response()->json(['message' => 'Email already exists'], 400);
         }
 
-        if (isset($data['password'])) {
-            $data['password'] = Hash::make($data['password']);
-        }
-
         $user->update($data);
 
         return response()->json($user, 200);
+    }
+
+    // GET /api/users/{user}/tasks
+    public function tasks(User $user)
+    {
+        return response()->json($user->tasks()->get(), 200);
     }
 
     // DELETE /api/users/{user}
@@ -77,6 +86,6 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return response()->json(['message' => 'User deleted successfully'], 204);
+        return response()->json(['message' => 'User deleted successfully.'], 204);
     }
 }
