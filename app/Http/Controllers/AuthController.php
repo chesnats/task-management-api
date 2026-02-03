@@ -3,21 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
     // POST /api/register
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|string|confirmed|min:6',
-        ]);
-
-        $user = User::create($request->all());
+        $user = User::create($request->validated());
 
         return response()->json([
             'message' => 'User registered successfully',
@@ -26,12 +22,9 @@ class AuthController extends Controller
     }
 
     // POST /api/login
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $data = $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required',
-        ]);
+        $data = $request->validated();
 
         $user = User::where('email', $data['email'])->first();
 
