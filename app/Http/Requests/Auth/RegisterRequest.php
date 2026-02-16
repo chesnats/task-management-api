@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\Base\ApiRequest;
 
@@ -17,6 +17,8 @@ class RegisterRequest extends ApiRequest
             'name'     => ['required', 'string', 'max:255', 'unique:users,name'],
             'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'confirmed', 'min:6'],
+            'role'     => ['required', 'in:admin,team_leader,user'],
+            'team_id'  => ['nullable', 'exists:teams,id'],
         ];
     }
 

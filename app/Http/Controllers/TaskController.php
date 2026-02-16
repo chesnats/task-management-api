@@ -3,16 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
-use App\Http\Requests\StoreTaskRequest;
-use App\Http\Requests\UpdateTaskRequest;
+use App\Http\Requests\Task\StoreTaskRequest;
+use App\Http\Requests\Task\UpdateTaskRequest;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    // GET /api/tasks?include=user
+    // GET /api/tasks - with role-based filtering
     public function index(Request $request)
     {
+        $authUser = $request->user();
         $query = Task::query();
+
+        if ($authUser->isAdmin()) {
+            $query = Task::query();
+        } elseif ($authUser->isTeamLeader()) {
+            $query = Task::whereIn('user_id', function ($subquery) use ($authUser) {
+                $subquery->select('id')
+                         ->from('users')
+                         ->where('team_id', $authUser->team_id)
+                         ->orWhere('id', $authUser->id);
+            });
+        } else {
+            $query = Task::where('user_id', $authUser->id);
+        }
 
         if ($request->query('include') === 'user') {
             $query->with('user');
@@ -26,7 +40,7 @@ class TaskController extends Controller
     {
         $task = Task::find($id);
 
-        if (! $task) {
+        if (!$task) {
             return response()->json(['message' => 'Task not found.'], 404);
         }
 
@@ -42,16 +56,30 @@ class TaskController extends Controller
 
         return response()->json([
             'message' => 'Task created successfully.',
-            'task' => $task
+            'task'    => $task
         ], 201);
     }
 
-    // PUT/PATCH /api/tasks/{task}
+    // PATCH /api/tasks/{task} - with role-based authorization
     public function update(UpdateTaskRequest $request, Task $task)
     {
-        $data = $request->validated();
+        $authUser = $request->user();
+        $taskOwner = $task->user;
 
-        $task->update($data);
+        if ($authUser->isAdmin()) {
+        } elseif ($authUser->isTeamLeader()) {
+            if ($taskOwner->team_id !== $authUser->team_id && $taskOwner->id !== $authUser->id) {
+                return response()->json(['message' => 'Unauthorized to update this task'], 403);
+            }
+        } else {
+            if ($taskOwner->id !== $authUser->id) {
+                return response()->json(['message' => 'Unauthorized to update this task'], 403);
+            }
+        }
+
+        $validated = $request->validated();
+
+        $task->update($validated);
 
         return response()->json($task, 200);
     }
@@ -61,7 +89,7 @@ class TaskController extends Controller
     {
         $task = Task::find($id);
 
-        if (! $task) {
+        if (!$task) {
             return response()->json(['message' => 'Task not found.'], 404);
         }
 

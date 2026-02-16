@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\User;
 
 use App\Http\Requests\Base\ApiRequest;
 use Illuminate\Validation\Rule;
@@ -18,8 +18,8 @@ class UpdateUserRequest extends ApiRequest
 
         return [
             'name'     => ['sometimes','string','max:255', Rule::unique('users', 'name')->ignore($userId),],
-            'email'    => ['sometimes','email',Rule::unique('users', 'email')->ignore($userId),],
-            'password' => ['sometimes','string','confirmed','min:6',],
+            'email'    => ['sometimes','email', Rule::unique('users', 'email')->ignore($userId),],
+            'password' => ['sometimes','string','min:8'],
         ];
     }
 
@@ -32,7 +32,7 @@ class UpdateUserRequest extends ApiRequest
             'email.email'        => 'Please provide a valid email address.',
             'email.unique'       => 'Email has already been taken.',
             'password.string'    => 'Password must be a string.',
-            'password.min'       => 'Password must be at least 6 characters.',
+            'password.min'       => 'Password must be at least 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
         ];
     }

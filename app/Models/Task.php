@@ -24,4 +24,10 @@ class Task extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // A task's team is determined through its user's team
+    public function team()
+    {
+        return $this->user->team();
+    }
 }

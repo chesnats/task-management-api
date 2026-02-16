@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Task;
 
 use App\Http\Requests\Base\ApiRequest;
 use Illuminate\Validation\Rule;
