@@ -1,33 +1,37 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TeamMemberController;
 
-// Public: registration and login
+// Public
 Route::post('register', [AuthController::class, 'register']);
-Route::post('login', [AuthController::class, 'login']);
+Route::post('login',    [AuthController::class, 'login']);
 
 // Protected routes - require authentication and role checks
 Route::middleware('check.role')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
 
-    Route::apiResources([
-        'users' => UserController::class,
-        'tasks' => TaskController::class,
-    
-    ]);
-    
-    Route::apiResource('teams', TeamController::class)
-        ->middleware([
-            'store'   => 'check.role:Admin',
-            'update'  => 'check.role:Admin',
-            'destroy' => 'check.role:Admin',
-        ]);
- 
+    // Users
+    Route::apiResource('users', UserController::class);
     Route::get('users/{user}/tasks', [UserController::class, 'tasks']);
-    Route::get('tasks/{task}/user', [TaskController::class, 'user']);
+
+    // Tasks
+    Route::apiResource('tasks', TaskController::class);
+    Route::get('tasks/{task}/user',  [TaskController::class, 'user']);
+    
+    // Teams
+    Route::get('teams',           [TeamController::class, 'index']);
+    Route::get('teams/{team}',    [TeamController::class, 'show']);
+    Route::post('teams',          [TeamController::class, 'store'])->middleware('check.role:Admin');
+    Route::patch('teams/{team}',  [TeamController::class, 'update'])->middleware('check.role:Admin');
+    Route::delete('teams/{team}', [TeamController::class, 'destroy'])->middleware('check.role:Admin');
+
+    Route::post('teams/{team}/members',            [TeamMemberController::class, 'store'])->middleware('check.team.leader:team');
+    Route::delete('teams/{team}/members/{userId}', [TeamMemberController::class, 'destroy'])->middleware('check.team.leader:team');
+ 
 });
 

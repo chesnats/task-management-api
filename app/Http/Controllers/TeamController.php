@@ -5,13 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\Team;
 use App\Http\Requests\Team\StoreTeamRequest;
 use App\Http\Requests\Team\UpdateTeamRequest;
+use App\Http\Traits\IncludesTrait;
+use Illuminate\Http\Request;
 
 class TeamController extends Controller
 {
-    // GET /api/teams - Anyone can view teams
-    public function index()
+    use IncludesTrait;
+    
+    // GET /api/teams - with role-based filtering
+    public function index(Request $request)
     {
-        return response()->json(Team::all(), 200);
+        $authUser = $request->user();
+        $includes = $this->parseIncludes($request, ['users']);
+        
+        if ($authUser->isAdmin()) {
+            $query = Team::query();
+        } elseif ($authUser->team_id) {
+            $query = Team::where('id', $authUser->team_id);
+        } else {
+            $query = Team::query();
+        }
+        
+        if ($includes) {
+            $query->with($includes);
+        }
+
+        return response()->json($query->get(), 200);
     }
 
     // POST /api/teams - Only Admin can create teams
@@ -27,9 +46,22 @@ class TeamController extends Controller
         ], 201);
     }
 
-    // GET /api/teams/{team} - Anyone can view specific team
-    public function show(Team $team)
+    // GET /api/teams/{team} - with role-based authorization
+    public function show(Team $team, Request $request)
     {
+        $authUser = $request->user();
+        
+        // Allow if: admin, has no team (can browse), or belongs to the team
+        if (!$authUser->isAdmin() && $authUser->team_id && $team->id !== $authUser->team_id) {
+            return response()->json(['message' => 'Unauthorized to view this team'], 403);
+        }
+        
+        $includes = $this->parseIncludes($request, ['users']);
+        
+        if ($includes) {
+            $team->load($includes);
+        }
+
         return response()->json($team, 200);
     }
 

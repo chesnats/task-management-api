@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Http\Requests\User\UpdateUserRequest;
+use App\Http\Traits\IncludesTrait;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    use IncludesTrait;
     // GET /api/users - with role-based filtering
     public function index(Request $request)
     {
@@ -23,8 +25,9 @@ class UserController extends Controller
             $query = User::where('id', $authUser->id);
         }
 
-        if ($request->query('include') === 'tasks') {
-            $query->with('tasks');
+        $includes = $this->parseIncludes($request, ['team', 'tasks']);
+        if ($includes) {
+            $query->with($includes);
         }
 
         return response()->json($query->get(), 200);
@@ -62,6 +65,30 @@ class UserController extends Controller
             'message' => 'User created successfully',
             'user'    => $user
         ], 201);
+    }
+
+    // GET /api/users/{user} - Show single user with optional includes
+    public function show(User $user, Request $request)
+    {
+        $authUser = $request->user();
+
+        if ($authUser->isAdmin()) {
+        } elseif ($authUser->isTeamLeader()) {
+            if ($user->team_id !== $authUser->team_id && $user->id !== $authUser->id) {
+                return response()->json(['message' => 'Unauthorized to view this user'], 403);
+            }
+        } else {
+            if ($user->id !== $authUser->id) {
+                return response()->json(['message' => 'Unauthorized to view this user'], 403);
+            }
+        }
+
+        $includes = $this->parseIncludes($request, ['team', 'tasks']);
+        if ($includes) {
+            $user->load($includes);
+        }
+
+        return response()->json($user, 200);
     }
     
     // GET /api/users/{user}/tasks
