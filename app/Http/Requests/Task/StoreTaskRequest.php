@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Task;
 
 use App\Http\Requests\Base\ApiRequest;
+use Illuminate\Validation\Rule;
 
 class StoreTaskRequest extends ApiRequest
 {
@@ -17,7 +18,7 @@ class StoreTaskRequest extends ApiRequest
             'title'       => ['required', 'string', 'max:255', 'unique:tasks,title'],
             'description' => ['sometimes', 'nullable', 'string'],
             'completed'   => ['sometimes', 'boolean'],
-            'user_id'     => ['required', 'exists:users,id'],
+            'user_id'     => ['required', Rule::exists('users', 'id')->whereNull('deleted_at')],
         ];
     }
 

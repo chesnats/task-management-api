@@ -14,7 +14,11 @@ class AuthController extends Controller
     // POST /api/register
     public function register(RegisterRequest $request)
     {
-        $user = User::create($request->validated());
+        $validated = $request->validated();
+        $validated['role'] = 'user';
+        $validated['team_id'] = null;
+
+        $user = User::create($validated);
 
         return response()->json([
             'message' => 'User registered successfully',

@@ -17,10 +17,10 @@ class UpdateTaskRequest extends ApiRequest
         $taskId = $this->route('task') ? $this->route('task')->id : null;
 
         return [
-            'title'       => ['sometimes','string','max:255', Rule::unique('tasks', 'title')->ignore($taskId),],
+            'title'       => ['sometimes', 'string', 'max:255', Rule::unique('tasks', 'title')->ignore($taskId)],
             'description' => ['sometimes', 'nullable', 'string'],
             'completed'   => ['sometimes', 'boolean'],
-            'user_id'     => ['sometimes', 'exists:users,id'],
+            'user_id'     => ['sometimes', Rule::exists('users', 'id')->whereNull('deleted_at')],
         ];
     }
 
