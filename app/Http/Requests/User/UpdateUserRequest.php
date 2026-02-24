@@ -20,6 +20,8 @@ class UpdateUserRequest extends ApiRequest
             'name'     => ['sometimes','string','max:255', Rule::unique('users', 'name')->ignore($userId),],
             'email'    => ['sometimes','email', Rule::unique('users', 'email')->ignore($userId),],
             'password' => ['sometimes','string','min:8'],
+            'avatar'   => ['nullable','image','max:5120'],
+            'team_id'  => ['sometimes','nullable','exists:teams,id'],
         ];
     }
 
@@ -34,6 +36,7 @@ class UpdateUserRequest extends ApiRequest
             'password.string'    => 'Password must be a string.',
             'password.min'       => 'Password must be at least 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
+            'team_id.exists'     => 'The selected team does not exist.',
         ];
     }
 }

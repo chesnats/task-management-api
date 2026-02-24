@@ -19,6 +19,7 @@ class UpdateTeamRequest extends ApiRequest
         return [
             'name'        => ['sometimes', 'string', 'max:255', Rule::unique('teams', 'name')->ignore($teamId)],
             'description' => ['sometimes', 'nullable', 'string'],
+            'avatar'      => ['nullable', 'image', 'max:5120'],
         ];
     }
 

@@ -12,27 +12,22 @@ class TaskController extends Controller
     // GET /api/tasks - with role-based filtering
     public function index(Request $request)
     {
-        $authUser = $request->user();
+        $auth = $request->user();
         $query = Task::query();
 
-        if ($authUser->isAdmin()) {
-            $query = Task::query();
-        } elseif ($authUser->isTeamLeader()) {
-            $query = Task::whereIn('user_id', function ($subquery) use ($authUser) {
-                $subquery->select('id')
-                         ->from('users')
-                         ->where('team_id', $authUser->team_id)
-                         ->orWhere('id', $authUser->id);
-            });
-        } else {
-            $query = Task::where('user_id', $authUser->id);
+        // Role-based filtering
+        if ($auth->isTeamLeader()) {
+            $query->whereHas('user', fn($q) => $q->where('team_id', $auth->team_id));
+        } elseif (!$auth->isAdmin()) {
+            $query->where('user_id', $auth->id);
         }
 
-        if ($request->query('include') === 'user') {
-            $query->with('user');
+        // Include trashed if Admin and requested
+        if ($auth->isAdmin() && $request->has('trashed')) {
+            $query->withTrashed();
         }
 
-        return response()->json($query->get(), 200);
+        return response()->json($query->with($request->include === 'user' ? ['user'] : [])->get());
     }
     
     // GET /api/tasks/{task}/user
@@ -96,5 +91,27 @@ class TaskController extends Controller
         $task->delete();
 
         return response()->json(['message' => 'Task deleted successfully.'], 200);
+    }
+    
+    // POST /api/tasks/restore/{id} - Restore a soft-deleted task
+    public function restore($id, Request $request)
+    {
+        $task = Task::withTrashed()->findOrFail($id);
+        $auth = $request->user();
+
+        // Authorization: Only Admin or the Team Leader of the task owner can restore
+        if (!$auth->isAdmin()) {
+            $taskOwner = $task->user; 
+            if (!$auth->isTeamLeader() || $taskOwner->team_id !== $auth->team_id) {
+                return response()->json(['message' => 'Unauthorized to restore this task'], 403);
+            }
+        }
+
+        $task->restore();
+
+        return response()->json([
+            'message' => 'Task restored successfully',
+            'task' => $task
+        ], 200);
     }
 }

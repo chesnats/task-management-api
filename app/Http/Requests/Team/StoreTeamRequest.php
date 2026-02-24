@@ -16,6 +16,7 @@ class StoreTeamRequest extends ApiRequest
         return [
             'name'        => ['required', 'string', 'max:255', 'unique:teams'],
             'description' => ['sometimes', 'nullable', 'string'],
+            'avatar'      => ['nullable', 'image', 'max:5120'],
         ];
     }
 
